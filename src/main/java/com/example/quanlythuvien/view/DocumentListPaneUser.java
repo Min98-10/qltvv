@@ -3,71 +3,88 @@ package com.example.quanlythuvien.view;
 import com.example.quanlythuvien.model.Document;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 
-import java.util.List;
-import java.util.function.Consumer;
+public class DocumentDetailPaneUser extends VBox {
 
-public class DocumentListPaneUser extends VBox {
+    private final Label titleLabel;
+    private final Label authorLabel;
+    private final Label categoryLabel;
+    private final Label statusLabel;
+    private final Label viewsLabel;
+    private final Label updatedLabel;
+    private final Label summaryLabel;
+    private final ImageView imageView;
 
-    public DocumentListPaneUser(Consumer<Document> onDocumentSelected) {
+    public DocumentDetailPaneUser() {
         setPadding(new Insets(20));
-        setSpacing(15);
+        setSpacing(20);
 
-        Label title = new Label("📚 Tài liệu có sẵn");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-        getChildren().add(title);
+        titleLabel = new Label("TÊN TÀI LIỆU");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        titleLabel.setWrapText(true);
 
-        GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(20);
+        imageView = new ImageView("https://via.placeholder.com/160x220");
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(220);
 
-        List<Document> documents = getMockDocuments();
-        int col = 0, row = 0;
+        VBox imageBox = new VBox(imageView);
+        imageBox.setAlignment(Pos.TOP_CENTER);
+        imageBox.setPadding(new Insets(10));
+        HBox.setHgrow(imageBox, Priority.ALWAYS);
 
-        for (Document doc : documents) {
-            VBox card = createDocumentCard(doc);
-            card.setOnMouseClicked((MouseEvent e) -> onDocumentSelected.accept(doc));
-            grid.add(card, col, row);
+        VBox infoBox = new VBox(10);
+        infoBox.setPadding(new Insets(10));
+        infoBox.setStyle("-fx-font-size: 15px;");
 
-            col++;
-            if (col == 4) {
-                col = 0;
-                row++;
-            }
+        updatedLabel = new Label("🕒 Cập nhật: ");
+        authorLabel = new Label("✍ Tác giả: ");
+        categoryLabel = new Label("📂 Thể loại: ");
+        statusLabel = new Label("📦 Tình trạng: ");
+        viewsLabel = new Label("👁️ Lượt mượn: ");
+
+        Button borrowBtn = new Button("📥 Mượn tài liệu");
+        borrowBtn.setStyle("-fx-font-size: 14px; -fx-background-color: #4CAF50; -fx-text-fill: white;");
+        borrowBtn.setMaxWidth(Double.MAX_VALUE);
+
+        infoBox.getChildren().addAll(updatedLabel, authorLabel, categoryLabel, statusLabel, viewsLabel, borrowBtn);
+        HBox.setHgrow(infoBox, Priority.ALWAYS);
+
+        HBox topSection = new HBox(30, imageBox, infoBox);
+        topSection.setAlignment(Pos.CENTER);
+
+        Label summaryTitle = new Label("📄 TÓM TẮT");
+        summaryTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        summaryLabel = new Label("(Chưa có nội dung tóm tắt)");
+        summaryLabel.setWrapText(true);
+        summaryLabel.setStyle("-fx-font-size: 14px;");
+        summaryLabel.setMaxWidth(Double.MAX_VALUE);
+
+        Button commentBtn = new Button("💬 Xem bình luận");
+        commentBtn.setStyle("-fx-font-size: 13px;");
+
+        VBox summaryBox = new VBox(10, summaryTitle, summaryLabel, commentBtn);
+        summaryBox.setPadding(new Insets(10));
+
+        getChildren().addAll(titleLabel, topSection, summaryBox);
+    }
+
+    public void setData(Document doc) {
+        titleLabel.setText(doc.getTitle());
+        authorLabel.setText("✍ Tác giả: " + doc.getAuthor());
+        categoryLabel.setText("📂 Thể loại: " + doc.getCategory());
+        statusLabel.setText("📦 Tình trạng: " + doc.getStatus());
+        viewsLabel.setText("👁️ Lượt mượn: " + doc.getViewCount());
+        updatedLabel.setText("🕒 Cập nhật: " + doc.getUpdatedAt());
+        summaryLabel.setText(doc.getSummary());
+
+        try {
+            imageView.setImage(new Image(doc.getImageUrl()));
+        } catch (Exception e) {
+            imageView.setImage(new Image("https://via.placeholder.com/160x220"));
         }
-
-        getChildren().add(grid);
-    }
-
-    private VBox createDocumentCard(Document doc) {
-        VBox card = new VBox(5);
-        card.setPadding(new Insets(10));
-        card.setStyle("-fx-border-color: #ccc; -fx-border-radius: 5px;");
-        card.setAlignment(Pos.CENTER);
-        card.setPrefWidth(150);
-
-        ImageView img = new ImageView(new Image(doc.getImageUrl(), 100, 130, true, true));
-        Label title = new Label(doc.getTitle());
-        title.setWrapText(true);
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
-
-        Label author = new Label(doc.getAuthor());
-        author.setStyle("-fx-font-size: 12px;");
-
-        card.getChildren().addAll(img, title, author);
-        return card;
-    }
-
-    private List<Document> getMockDocuments() {
-        return List.of(
-                new Document("Java cơ bản", "Nguyễn A", "https://via.placeholder.com/100x130", "Lập trình", "Còn", 123, "01/06/2025", "Giới thiệu Java cho người mới."),
-                new Document("Kỹ năng mềm", "Lê B", "https://via.placeholder.com/100x130", "Kỹ năng", "Còn", 87, "02/06/2025", "Tài liệu rèn luyện giao tiếp."),
-                new Document("Tâm lý học", "Phạm C", "https://via.placeholder.com/100x130", "Tâm lý", "Còn", 45, "29/05/2025", "Tổng quan ngành tâm lý.")
-        );
     }
 }
