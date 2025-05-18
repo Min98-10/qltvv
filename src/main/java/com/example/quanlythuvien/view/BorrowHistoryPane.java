@@ -1,14 +1,22 @@
 package com.example.quanlythuvien.view;
 
+import com.example.quanlythuvien.model.BorrowRecord;
+import com.example.quanlythuvien.util.BorrowDataManager;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class BorrowHistoryPane extends VBox {
 
-    public BorrowHistoryPane() {
+    public BorrowHistoryPane(String username) {
         setPadding(new Insets(20));
         setSpacing(15);
         VBox.setVgrow(this, Priority.ALWAYS);
@@ -31,47 +39,71 @@ public class BorrowHistoryPane extends VBox {
         noteCol.setCellValueFactory(data -> data.getValue().noteProperty());
 
         table.getColumns().addAll(titleCol, borrowCol, returnCol, noteCol);
-        table.setItems(getSample());
+        table.setItems(loadUserRecords(username));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         getChildren().addAll(title, table);
         VBox.setVgrow(table, Priority.ALWAYS);
     }
 
-    private ObservableList<Record> getSample() {
-        return FXCollections.observableArrayList(
-                new Record("Tâm lý học", "01/05/2025", "10/05/2025", "✅ Trả đúng hạn"),
-                new Record("Cấu trúc dữ liệu", "15/04/2025", "28/04/2025", "🟠 Trả trễ 1 ngày"),
-                new Record("Thiết kế UX", "10/03/2025", "-", "🔴 Quá hạn")
-        );
+    private ObservableList<Record> loadUserRecords(String username) {
+        List<BorrowRecord> all = BorrowDataManager.findByUsername(username);
+        List<Record> records = all.stream().map(r -> {
+            String returnDate = r.getStatus().equalsIgnoreCase("Đã trả") ? r.getDueDate() : "-";
+            String note;
+            try {
+                LocalDate due = LocalDate.parse(r.getDueDate());
+                if (r.getStatus().equalsIgnoreCase("Đã trả")) {
+                    LocalDate today = LocalDate.now();
+                    if (today.isAfter(due)) {
+                        long daysLate = today.toEpochDay() - due.toEpochDay();
+                        note = "🟠 Trả trễ " + daysLate + " ngày";
+                    } else {
+                        note = "✅ Trả đúng hạn";
+                    }
+                } else {
+                    if (LocalDate.now().isAfter(due)) {
+                        note = "🔴 Quá hạn";
+                    } else {
+                        note = "⏳ Đang mượn";
+                    }
+                }
+            } catch (Exception e) {
+                note = "-";
+            }
+
+            return new Record(r.getDocumentTitle(), r.getBorrowDate(), returnDate, note);
+        }).collect(Collectors.toList());
+
+        return FXCollections.observableArrayList(records);
     }
 
     public static class Record {
-        private final javafx.beans.property.SimpleStringProperty title;
-        private final javafx.beans.property.SimpleStringProperty borrowDate;
-        private final javafx.beans.property.SimpleStringProperty returnDate;
-        private final javafx.beans.property.SimpleStringProperty note;
+        private final SimpleStringProperty title;
+        private final SimpleStringProperty borrowDate;
+        private final SimpleStringProperty returnDate;
+        private final SimpleStringProperty note;
 
         public Record(String t, String b, String r, String n) {
-            title = new javafx.beans.property.SimpleStringProperty(t);
-            borrowDate = new javafx.beans.property.SimpleStringProperty(b);
-            returnDate = new javafx.beans.property.SimpleStringProperty(r);
-            note = new javafx.beans.property.SimpleStringProperty(n);
+            title = new SimpleStringProperty(t);
+            borrowDate = new SimpleStringProperty(b);
+            returnDate = new SimpleStringProperty(r);
+            note = new SimpleStringProperty(n);
         }
 
-        public javafx.beans.property.StringProperty titleProperty() {
+        public StringProperty titleProperty() {
             return title;
         }
 
-        public javafx.beans.property.StringProperty borrowDateProperty() {
+        public StringProperty borrowDateProperty() {
             return borrowDate;
         }
 
-        public javafx.beans.property.StringProperty returnDateProperty() {
+        public StringProperty returnDateProperty() {
             return returnDate;
         }
 
-        public javafx.beans.property.StringProperty noteProperty() {
+        public StringProperty noteProperty() {
             return note;
         }
     }

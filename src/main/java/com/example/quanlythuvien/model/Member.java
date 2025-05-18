@@ -1,54 +1,60 @@
 package com.example.quanlythuvien.model;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 
-public class Member {
-    private final StringProperty username;
-    private final StringProperty fullName;
-    private final StringProperty birthDate;
-    private final StringProperty id;
-    private final StringProperty email;
-    private final StringProperty address;
+import java.io.Serializable;
+import java.time.LocalDate;
 
-    public Member(String username, String fullName, String birthDate, String id, String email, String address) {
-        this.username = new SimpleStringProperty(username);
-        this.fullName = new SimpleStringProperty(fullName);
-        this.birthDate = new SimpleStringProperty(birthDate);
-        this.id = new SimpleStringProperty(id);
-        this.email = new SimpleStringProperty(email);
-        this.address = new SimpleStringProperty(address);
+public class Member implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private String username;
+    private String password;
+    private String role;
+    private String fullName;
+    private LocalDate birthDate;
+    private String email;
+    private String address;
+
+    public Member(String username, String password, String role,
+                  String fullName, LocalDate birthDate,
+                  String email, String address) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.fullName = fullName;
+        this.birthDate = birthDate;
+        this.email = email;
+        this.address = address;
     }
 
-    public StringProperty usernameProperty() {
-        return username;
-    }
+    // ===== Getter & Setter =====
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public StringProperty fullNameProperty() {
-        return fullName;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public StringProperty birthDateProperty() {
-        return birthDate;
-    }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 
-    public StringProperty idProperty() {
-        return id;
-    }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public StringProperty emailProperty() {
-        return email;
-    }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
-    public StringProperty addressProperty() {
-        return address;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getUsername() {
-        return username.get();
-    }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
-    public String getFullName() {
-        return fullName.get();
-    }
+    // ===== JavaFX Properties (optional, for TableView binding) =====
+    public StringProperty usernameProperty() { return new SimpleStringProperty(username); }
+    public StringProperty fullNameProperty() { return new SimpleStringProperty(fullName); }
+    public ObjectProperty<LocalDate> birthDateProperty() { return new SimpleObjectProperty<>(birthDate); }
+    public StringProperty emailProperty() { return new SimpleStringProperty(email); }
+    public StringProperty addressProperty() { return new SimpleStringProperty(address); }
+    public StringProperty roleProperty() { return new SimpleStringProperty(role); }
 }

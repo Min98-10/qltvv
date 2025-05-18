@@ -11,19 +11,14 @@ public class DocumentDAO {
 
     public static List<Document> getLatestDocuments() {
         List<Document> list = new ArrayList<>();
-        String sql = "SELECT TOP 8 id, title, author, image_url FROM documents ORDER BY id DESC";
+        String sql = "SELECT TOP 8 * FROM documents ORDER BY id DESC";
 
         try (Connection conn = DatabaseHelper.connect();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                list.add(new Document(
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getString("author"),
-                        rs.getString("image_url")  // có thể là null
-                ));
+                list.add(mapResultSetToDocument(rs));
             }
 
         } catch (SQLException e) {
@@ -35,8 +30,7 @@ public class DocumentDAO {
 
     public static List<Document> search(String keyword) {
         List<Document> list = new ArrayList<>();
-        String sql = "SELECT id, title, author, image_url FROM documents " +
-                "WHERE title LIKE ? OR author LIKE ? ORDER BY id DESC";
+        String sql = "SELECT * FROM documents WHERE title LIKE ? OR author LIKE ? ORDER BY id DESC";
 
         try (Connection conn = DatabaseHelper.connect();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -47,12 +41,7 @@ public class DocumentDAO {
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                list.add(new Document(
-                        rs.getInt("id"),
-                        rs.getString("title"),
-                        rs.getString("author"),
-                        rs.getString("image_url")
-                ));
+                list.add(mapResultSetToDocument(rs));
             }
 
         } catch (SQLException e) {
@@ -62,5 +51,31 @@ public class DocumentDAO {
         return list;
     }
 
+    public static Document getByTitle(String title) {
+        String sql = "SELECT * FROM documents WHERE title = ?";
+        try (Connection conn = DatabaseHelper.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            stmt.setString(1, title);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToDocument(rs);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    // === Helper ===
+    private static Document mapResultSetToDocument(ResultSet rs) throws SQLException {
+        return new Document(
+                rs.getInt("id"),
+                rs.getString("title"),
+                rs.getString("author"),
+                rs.getString("category")
+        );
+    }
 }

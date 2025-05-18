@@ -1,12 +1,18 @@
 package com.example.quanlythuvien.view;
 
 import com.example.quanlythuvien.model.BorrowRecord;
+import com.example.quanlythuvien.util.BorrowDataManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class BorrowManagementPane extends VBox {
 
@@ -20,11 +26,8 @@ public class BorrowManagementPane extends VBox {
         Label title = new Label("📚 Quản lý mượn/trả");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        data = FXCollections.observableArrayList(
-                new BorrowRecord("khanh01", "Java cơ bản", "01/06/2025", "10/06/2025", "Đã trả"),
-                new BorrowRecord("anhnguyen", "Tâm lý học", "20/05/2025", "01/06/2025", "Đã trả"),
-                new BorrowRecord("linhvu", "SQL nâng cao", "25/05/2025", "03/06/2025", "Đã trả")
-        );
+        List<BorrowRecord> records = BorrowDataManager.load();
+        data = FXCollections.observableArrayList(records);
 
         table = new TableView<>(data);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -45,6 +48,9 @@ public class BorrowManagementPane extends VBox {
         TableColumn<BorrowRecord, String> statusCol = new TableColumn<>("Trạng thái");
         statusCol.setCellValueFactory(c -> c.getValue().statusProperty());
 
+        TableColumn<BorrowRecord, Integer> qtyCol = new TableColumn<>("Số lượng");
+        qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
         TableColumn<BorrowRecord, Void> actionCol = new TableColumn<>("Hành động");
         actionCol.setCellFactory(col -> new TableCell<>() {
             private final Button markReturned = new Button("✅ Trả");
@@ -53,32 +59,45 @@ public class BorrowManagementPane extends VBox {
 
             {
                 box.setAlignment(Pos.CENTER);
+
                 markReturned.setOnAction(e -> {
                     BorrowRecord rec = getTableView().getItems().get(getIndex());
                     rec.setStatus("Đã trả");
+                    BorrowDataManager.save(table.getItems());
                     table.refresh();
                 });
 
                 extend.setOnAction(e -> {
                     BorrowRecord rec = getTableView().getItems().get(getIndex());
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Gia hạn");
-                    alert.setHeaderText("Đã gia hạn thêm 7 ngày cho: " + rec.getDocumentTitle());
-                    alert.show();
+                    try {
+                        LocalDate currentDue = LocalDate.parse(rec.getDueDate());
+                        LocalDate newDue = currentDue.plusDays(7);
+                        rec.setDueDate(newDue.toString());
+
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Gia hạn");
+                        alert.setHeaderText("Đã gia hạn thêm 7 ngày cho: " + rec.getDocumentTitle());
+                        alert.setContentText("Hạn mới: " + newDue.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                        alert.show();
+
+                        BorrowDataManager.save(table.getItems());
+                        table.refresh();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 });
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) setGraphic(null);
-                else setGraphic(box);
+                setGraphic(empty ? null : box);
             }
         });
 
-        table.getColumns().addAll(userCol, docCol, borrowCol, returnCol, statusCol, actionCol);
+        table.getColumns().addAll(userCol, docCol, borrowCol, returnCol, statusCol, qtyCol, actionCol);
 
         getChildren().addAll(title, table);
-        VBox.setVgrow(table, Priority.ALWAYS); // ✅ mở rộng table toàn chiều cao
+        VBox.setVgrow(table, Priority.ALWAYS);
     }
 }

@@ -13,11 +13,9 @@ public class MainAdminView {
     public void show(Stage stage) {
         // ===== HEADER =====
         Label logo = new Label("📚 Thư viện");
-        logo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         TextField searchField = new TextField();
         searchField.setPromptText("🔍 Tìm kiếm tài liệu...");
-        searchField.setStyle("-fx-font-size: 14px;");
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
         Label userLabel = new Label("Admin");
@@ -28,21 +26,23 @@ public class MainAdminView {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox header = new HBox(15, logo, searchField, spacer, userLabel, logoutBtn);
-        header.setPadding(new Insets(10));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color: #f9f9f9;");
+        header.getStyleClass().add("header-bar");
 
         // ===== SIDEBAR =====
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(10));
-        sidebar.setStyle("-fx-background-color: #f1f1f1;");
         sidebar.setPrefWidth(180);
+        sidebar.getStyleClass().add("sidebar");
 
+        // ===== CENTER CONTENT =====
         VBox centerBox = new VBox();
         centerBox.setPadding(new Insets(15));
         centerBox.setSpacing(10);
-        VBox.setVgrow(centerBox, Priority.ALWAYS); // ✅ Cho phép centerBox giãn theo chiều cao
+        centerBox.getStyleClass().add("content-pane");
+        VBox.setVgrow(centerBox, Priority.ALWAYS);
 
+        // ===== MENU =====
         String[] functions = {
                 "Trang chủ",
                 "Quản lý tài liệu",
@@ -55,61 +55,82 @@ public class MainAdminView {
             Button btn = new Button(name);
             btn.setMaxWidth(Double.MAX_VALUE);
             btn.setPrefHeight(60);
-            btn.setStyle("-fx-font-size: 14px; -fx-alignment: center;");
+            btn.getStyleClass().add("sidebar-button");
             VBox.setVgrow(btn, Priority.ALWAYS);
 
             switch (name) {
-                case "Quản lý tài liệu":
-                    btn.setOnAction(_ -> {
-                        DocumentListPane listPane = new DocumentListPane(doc -> {
-                            DocumentDetailPane detailPane = new DocumentDetailPane();
-                            detailPane.setData(doc);
-                            centerBox.getChildren().setAll(detailPane);
-                            VBox.setVgrow(detailPane, Priority.ALWAYS);
-                        });
-                        VBox.setVgrow(listPane, Priority.ALWAYS); // ✅
-                        centerBox.getChildren().setAll(listPane);
+                case "Trang chủ" -> btn.setOnAction(_ -> {
+                    SuggestionPane suggestionPane = new SuggestionPane(doc -> {
+                        if (!com.example.quanlythuvien.dao.DocumentFileDAO.contains(doc)) {
+                            com.example.quanlythuvien.dao.DocumentFileDAO.add(doc);
+                        }
+                        DocumentDetailPane detailPane = new DocumentDetailPane();
+                        detailPane.setData(doc);
+                        centerBox.getChildren().setAll(detailPane);
                     });
-                    break;
+                    VBox.setVgrow(suggestionPane, Priority.ALWAYS);
+                    centerBox.getChildren().setAll(suggestionPane);
+                });
 
-                case "Quản lý thành viên":
+                case "Quản lý tài liệu" -> btn.setOnAction(_ -> {
+                    DocumentListPane listPane = new DocumentListPane(doc -> {
+                        DocumentDetailPane detailPane = new DocumentDetailPane();
+                        detailPane.setData(doc);
+                        centerBox.getChildren().setAll(detailPane);
+                    });
+                    VBox.setVgrow(listPane, Priority.ALWAYS);
+                    centerBox.getChildren().setAll(listPane);
+                });
+
+                case "Quản lý thành viên" -> btn.setOnAction(_ -> {
                     MemberManagementPane memberPane = new MemberManagementPane();
-                    VBox.setVgrow(memberPane, Priority.ALWAYS); // ✅
-                    btn.setOnAction(_ -> centerBox.getChildren().setAll(memberPane));
-                    break;
+                    VBox.setVgrow(memberPane, Priority.ALWAYS);
+                    centerBox.getChildren().setAll(memberPane);
+                });
 
-                case "Quản lý mượn/trả":
+                case "Quản lý mượn/trả" -> btn.setOnAction(_ -> {
                     BorrowManagementPane borrowPane = new BorrowManagementPane();
-                    VBox.setVgrow(borrowPane, Priority.ALWAYS); // ✅ QUAN TRỌNG
-                    btn.setOnAction(_ -> centerBox.getChildren().setAll(borrowPane));
-                    break;
+                    VBox.setVgrow(borrowPane, Priority.ALWAYS);
+                    centerBox.getChildren().setAll(borrowPane);
+                });
 
-                case "Thống kê":
+                case "Thống kê" -> btn.setOnAction(_ -> {
                     StatisticsPane statsPane = new StatisticsPane();
                     VBox.setVgrow(statsPane, Priority.ALWAYS);
-                    btn.setOnAction(_ -> centerBox.getChildren().setAll(statsPane));
-                    break;
+                    centerBox.getChildren().setAll(statsPane);
+                });
 
-
-                default:
-                    btn.setOnAction(_ -> centerBox.getChildren().setAll(new Label("Bạn đã chọn: " + name)));
-                    break;
+                default -> btn.setOnAction(_ -> centerBox.getChildren().setAll(new Label("Chức năng đang phát triển.")));
             }
 
             sidebar.getChildren().add(btn);
         }
 
-        centerBox.getChildren().add(new Label("Chọn chức năng để hiển thị nội dung..."));
+        // ===== TRANG CHỦ MẶC ĐỊNH =====
+        SuggestionPane defaultPane = new SuggestionPane(doc -> {
+            if (!com.example.quanlythuvien.dao.DocumentFileDAO.contains(doc)) {
+                com.example.quanlythuvien.dao.DocumentFileDAO.add(doc);
+            }
+            DocumentDetailPane detailPane = new DocumentDetailPane();
+            detailPane.setData(doc);
+            centerBox.getChildren().setAll(detailPane);
+        });
+        VBox.setVgrow(defaultPane, Priority.ALWAYS);
+        centerBox.getChildren().add(defaultPane);
 
+        // ===== ROOT GIAO DIỆN =====
         BorderPane root = new BorderPane();
         root.setTop(header);
         root.setLeft(sidebar);
         root.setCenter(centerBox);
 
-        Scene scene = new Scene(root, 1100, 700);
+        Scene scene = new Scene(root, 1400, 800);
+        scene.getStylesheets().add(getClass()
+                .getResource("/com/example/quanlythuvien/style.css")
+                .toExternalForm());
+
         stage.setTitle("Thư viện - Admin");
         stage.setScene(scene);
         stage.show();
     }
-
 }

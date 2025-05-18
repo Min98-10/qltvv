@@ -1,5 +1,6 @@
 package com.example.quanlythuvien.view;
 
+import com.example.quanlythuvien.dao.DocumentFileDAO;
 import com.example.quanlythuvien.model.Document;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,13 +17,9 @@ public class MainUserView {
     }
 
     public void show(Stage stage) {
-        // ===== HEADER =====
         Label logo = new Label("📚 Thư viện");
-        logo.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-
         TextField searchField = new TextField();
         searchField.setPromptText("🔍 Tìm kiếm tài liệu...");
-        searchField.setStyle("-fx-font-size: 14px;");
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
         Label userLabel = new Label(username);
@@ -33,20 +30,19 @@ public class MainUserView {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox header = new HBox(15, logo, searchField, spacer, userLabel, logoutBtn);
-        header.setPadding(new Insets(10));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color: #f9f9f9;");
+        header.getStyleClass().add("header-bar");
 
-        // ===== SIDEBAR =====
         VBox sidebar = new VBox();
-        sidebar.setPadding(new Insets(10));
-        sidebar.setStyle("-fx-background-color: #f1f1f1;");
         sidebar.setPrefWidth(180);
+        sidebar.setPadding(new Insets(10));
+        sidebar.getStyleClass().add("sidebar");
 
         VBox centerBox = new VBox();
         centerBox.setPadding(new Insets(15));
         centerBox.setSpacing(10);
-        VBox.setVgrow(centerBox, Priority.ALWAYS); // ✅ cho phép kéo giãn trung tâm
+        centerBox.getStyleClass().add("content-pane");
+        VBox.setVgrow(centerBox, Priority.ALWAYS);
 
         String[] functions = {
                 "Trang chủ", "Tài liệu có sẵn", "Tài liệu đã mượn",
@@ -55,36 +51,61 @@ public class MainUserView {
 
         for (String name : functions) {
             Button btn = new Button(name);
-            btn.setMaxWidth(Double.MAX_VALUE);
             btn.setPrefHeight(60);
-            btn.setStyle("-fx-font-size: 14px; -fx-alignment: center;");
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.getStyleClass().add("sidebar-button");
             VBox.setVgrow(btn, Priority.ALWAYS);
 
-            if (name.equals("Tài liệu có sẵn")) {
-                btn.setOnAction(e -> {
-                    DocumentListPaneUser list = new DocumentListPaneUser(doc -> {
-                        DocumentDetailPaneUser detail = new DocumentDetailPaneUser();
-                        detail.setData(doc);
-                        VBox.setVgrow(detail, Priority.ALWAYS);
-                        centerBox.getChildren().setAll(detail);
+            switch (name) {
+                case "Trang chủ" -> {
+                    SuggestionPaneUser suggestionPane = new SuggestionPaneUser(username);
+                    VBox.setVgrow(suggestionPane, Priority.ALWAYS);
+                    btn.setOnAction(_ -> centerBox.getChildren().setAll(suggestionPane));
+                }
+
+                case "Tài liệu có sẵn" -> {
+                    btn.setOnAction(e -> {
+                        DocumentListPaneUser list = new DocumentListPaneUser(doc -> {
+                            Document fullDoc = DocumentFileDAO.getByTitle(doc.getTitle());
+                            if (fullDoc != null) {
+                                DocumentDetailPaneUser detail = new DocumentDetailPaneUser(fullDoc, username);
+                                VBox.setVgrow(detail, Priority.ALWAYS);
+                                centerBox.getChildren().setAll(detail);
+                            } else {
+                                Alert alert = new Alert(Alert.AlertType.ERROR, "❌ Không tìm thấy dữ liệu sách.");
+                                alert.show();
+                            }
+                        });
+                        VBox.setVgrow(list, Priority.ALWAYS);
+                        centerBox.getChildren().setAll(list);
                     });
-                    VBox.setVgrow(list, Priority.ALWAYS); // ✅
-                    centerBox.getChildren().setAll(list);
-                });
-            } else if (name.equals("Tài liệu đã mượn")) {
-                BorrowedDocumentPane borrowed = new BorrowedDocumentPane();
-                VBox.setVgrow(borrowed, Priority.ALWAYS);
-                btn.setOnAction(e -> centerBox.getChildren().setAll(borrowed));
-            } else if (name.equals("Lịch sử mượn trả")) {
-                BorrowHistoryPane history = new BorrowHistoryPane();
-                VBox.setVgrow(history, Priority.ALWAYS);
-                btn.setOnAction(e -> centerBox.getChildren().setAll(history));
-            } else if (name.equals("Thông tin tài khoản")) {
-                UserProfilePane profile = new UserProfilePane(username);
-                VBox.setVgrow(profile, Priority.ALWAYS);
-                btn.setOnAction(e -> centerBox.getChildren().setAll(profile));
-            } else {
-                btn.setOnAction(e -> centerBox.getChildren().setAll(new Label("Bạn đã chọn: " + name)));
+                }
+
+                case "Tài liệu đã mượn" -> {
+                    btn.setOnAction(e -> {
+                        BorrowedDocumentPane borrowed = new BorrowedDocumentPane(username);
+                        VBox.setVgrow(borrowed, Priority.ALWAYS);
+                        centerBox.getChildren().setAll(borrowed);
+                    });
+                }
+
+                case "Lịch sử mượn trả" -> {
+                    btn.setOnAction(e -> {
+                        BorrowHistoryPane history = new BorrowHistoryPane(username);
+                        VBox.setVgrow(history, Priority.ALWAYS);
+                        centerBox.getChildren().setAll(history);
+                    });
+                }
+
+                case "Thông tin tài khoản" -> {
+                    btn.setOnAction(e -> {
+                        UserProfilePane profile = new UserProfilePane(username);
+                        VBox.setVgrow(profile, Priority.ALWAYS);
+                        centerBox.getChildren().setAll(profile);
+                    });
+                }
+
+                default -> btn.setOnAction(e -> centerBox.getChildren().setAll(new Label("Bạn đã chọn: " + name)));
             }
 
             sidebar.getChildren().add(btn);
@@ -92,36 +113,16 @@ public class MainUserView {
 
         centerBox.getChildren().add(new Label("Chọn chức năng để bắt đầu"));
 
-        // ===== RIGHT =====
-        VBox rightBox = new VBox(20);
-        rightBox.setPadding(new Insets(10));
-        rightBox.setPrefWidth(220);
-
-        VBox ratingBox = new VBox(5);
-        ratingBox.setStyle("-fx-border-color: #ddd; -fx-padding: 10;");
-        ratingBox.getChildren().addAll(
-                new Label("⭐ Đánh giá nổi bật"),
-                new Label("Giáo trình Java ★★★★★"),
-                new Label("Tâm lý học ★★★★☆")
-        );
-
-        VBox borrowedBox = new VBox(5);
-        borrowedBox.setStyle("-fx-border-color: #ddd; -fx-padding: 10;");
-        borrowedBox.getChildren().addAll(
-                new Label("📖 Tài liệu đã mượn"),
-                new Label("Sức bền vật liệu - 01/04/2024"),
-                new Label("Kỹ năng mềm - 10/03/2024")
-        );
-
-        rightBox.getChildren().addAll(ratingBox, borrowedBox);
-
         BorderPane root = new BorderPane();
         root.setTop(header);
         root.setLeft(sidebar);
         root.setCenter(centerBox);
-        root.setRight(rightBox);
 
-        Scene scene = new Scene(root, 1100, 700);
+        Scene scene = new Scene(root, 1400, 800);
+        scene.getStylesheets().add(getClass()
+                .getResource("/com/example/quanlythuvien/style.css")
+                .toExternalForm());
+
         stage.setTitle("Thư viện - Người dùng");
         stage.setScene(scene);
         stage.show();

@@ -1,22 +1,23 @@
 package com.example.quanlythuvien.view;
 
 import com.example.quanlythuvien.dao.RegisterDAO;
+import com.example.quanlythuvien.model.Member;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-import java.sql.ResultSet;
 import java.time.LocalDate;
 
 public class UserProfilePane extends VBox {
 
-    private final TextField nameField, idField, emailField, addressField, usernameField;
-    private final PasswordField passwordField;
+    private final TextField nameField, emailField, addressField, usernameField;
+    private final PasswordField currentPasswordField, newPasswordField;
     private final DatePicker birthDatePicker;
     private final Label statusLabel;
     private String currentUsername;
+    private Member loadedMember;
 
     public UserProfilePane(String username) {
         this.currentUsername = username;
@@ -27,18 +28,17 @@ public class UserProfilePane extends VBox {
         Label title = new Label("👤 Thông tin tài khoản");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        nameField = createDisabledField();
+        nameField = new TextField();
         birthDatePicker = new DatePicker();
-        birthDatePicker.setDisable(true);
         birthDatePicker.setStyle("-fx-font-size: 14px;");
 
-        idField = createDisabledField();
-        emailField = createDisabledField();
-        addressField = createDisabledField();
-        usernameField = createDisabledField();
-        passwordField = new PasswordField();
-        passwordField.setEditable(false);
-        passwordField.setStyle("-fx-font-size: 14px;");
+        emailField = new TextField();
+        addressField = new TextField();
+        usernameField = new TextField();
+        currentPasswordField = new PasswordField();
+        currentPasswordField.setPromptText("Nhập mật khẩu hiện tại");
+        newPasswordField = new PasswordField();
+        newPasswordField.setPromptText("Mật khẩu mới (nếu muốn đổi)");
 
         statusLabel = new Label();
         statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: red;");
@@ -46,31 +46,42 @@ public class UserProfilePane extends VBox {
         Button editBtn = new Button("✏️ Chỉnh sửa");
         Button saveBtn = new Button("✅ Lưu");
 
+        setEditable(false);
+
         editBtn.setOnAction(e -> setEditable(true));
         saveBtn.setOnAction(e -> {
+            if (!currentPasswordField.getText().equals(loadedMember.getPassword())) {
+                statusLabel.setText("❌ Sai mật khẩu hiện tại.");
+                return;
+            }
+
             String newUsername = usernameField.getText().trim();
+            String newPassword = newPasswordField.getText().isBlank()
+                    ? currentPasswordField.getText()
+                    : newPasswordField.getText();
+
             boolean success = RegisterDAO.updateUserFullInfo(
                     currentUsername,
                     newUsername,
-                    passwordField.getText(),
-                    nameField.getText(),
+                    newPassword,
+                    nameField.getText().trim(),
                     birthDatePicker.getValue(),
-                    idField.getText(),
-                    emailField.getText(),
-                    addressField.getText()
+                    emailField.getText().trim(),
+                    addressField.getText().trim()
             );
+
             if (success) {
                 statusLabel.setText("✅ Cập nhật thành công!");
                 setEditable(false);
 
-                // Nếu đổi username → load lại
                 if (!newUsername.equals(currentUsername)) {
                     currentUsername = newUsername;
-                    Platform.runLater(() -> {
-                        this.getChildren().clear();
-                        new UserProfilePane(currentUsername).showIn(this);
-                    });
                 }
+
+                Platform.runLater(() -> {
+                    this.getChildren().clear();
+                    new UserProfilePane(currentUsername).showIn(this);
+                });
 
             } else {
                 statusLabel.setText("❌ Lỗi khi cập nhật!");
@@ -83,11 +94,11 @@ public class UserProfilePane extends VBox {
                 title,
                 labelAndField("Họ và tên:", nameField),
                 labelAndField("Ngày sinh:", birthDatePicker),
-                labelAndField("Mã định danh (ID):", idField),
                 labelAndField("Email:", emailField),
                 labelAndField("Địa chỉ:", addressField),
                 labelAndField("Tên đăng nhập:", usernameField),
-                labelAndField("Mật khẩu mới:", passwordField),
+                labelAndField("Mật khẩu hiện tại:", currentPasswordField),
+                labelAndField("Mật khẩu mới:", newPasswordField),
                 new HBox(10, editBtn, saveBtn),
                 statusLabel
         );
@@ -96,50 +107,27 @@ public class UserProfilePane extends VBox {
     private void setEditable(boolean b) {
         nameField.setEditable(b);
         birthDatePicker.setDisable(!b);
-        idField.setEditable(b);
         emailField.setEditable(b);
         addressField.setEditable(b);
         usernameField.setEditable(b);
-        passwordField.setEditable(b);
+        currentPasswordField.setEditable(b);
+        newPasswordField.setEditable(b);
     }
 
     private void loadUserData(String username) {
-        if (username.equals("nam")) {
-            nameField.setText("Nam Admin");
-            birthDatePicker.setValue(LocalDate.of(2000, 1, 1));
-            idField.setText("ADMIN001");
-            emailField.setText("nam.admin@example.com");
-            addressField.setText("Trụ sở chính");
-            usernameField.setText("nam");
-            passwordField.setText("nam123");
+        loadedMember = RegisterDAO.getUserInfo(username);
+        if (loadedMember != null) {
+            nameField.setText(loadedMember.getFullName());
+            birthDatePicker.setValue(loadedMember.getBirthDate());
+            emailField.setText(loadedMember.getEmail());
+            addressField.setText(loadedMember.getAddress());
+            usernameField.setText(loadedMember.getUsername());
+            currentPasswordField.setText(loadedMember.getPassword());
+            newPasswordField.setText("");
             setEditable(false);
         } else {
-            try {
-                ResultSet rs = RegisterDAO.getUserInfo(username);
-                if (rs != null && rs.next()) {
-                    nameField.setText(rs.getString("full_name"));
-                    birthDatePicker.setValue(rs.getDate("birth_date").toLocalDate());
-                    idField.setText(rs.getString("id"));
-                    emailField.setText(rs.getString("email"));
-                    addressField.setText(rs.getString("address"));
-                    usernameField.setText(username);
-                    passwordField.setText(rs.getString("password"));
-                    setEditable(false);
-                } else {
-                    statusLabel.setText("Không tìm thấy người dùng.");
-                }
-            } catch (Exception e) {
-                statusLabel.setText("Lỗi khi tải thông tin.");
-                e.printStackTrace();
-            }
+            statusLabel.setText("Không tìm thấy người dùng.");
         }
-    }
-
-    private TextField createDisabledField() {
-        TextField f = new TextField();
-        f.setEditable(false);
-        f.setStyle("-fx-font-size: 14px;");
-        return f;
     }
 
     private VBox labelAndField(String labelText, Control field) {
@@ -148,7 +136,6 @@ public class UserProfilePane extends VBox {
         return new VBox(5, label, field);
     }
 
-    // Hỗ trợ reload nội dung sau khi đổi username
     public void showIn(VBox parent) {
         parent.getChildren().setAll(this.getChildren());
     }

@@ -17,7 +17,6 @@ public class RegisterController {
     public void handleFullRegister(
             String fullName,
             LocalDate birthDate,
-            String id,
             String email,
             String address,
             String username,
@@ -25,30 +24,30 @@ public class RegisterController {
             String confirmPassword,
             Label errorLabel
     ) {
-        // Kiểm tra rỗng
-        if (fullName.isEmpty() || birthDate == null || id.isEmpty() || email.isEmpty() ||
+        if (fullName.isEmpty() || birthDate == null || email.isEmpty() ||
                 address.isEmpty() || username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             errorLabel.setText("Vui lòng điền đầy đủ thông tin.");
             return;
         }
 
-        // Kiểm tra mật khẩu
         if (!password.equals(confirmPassword)) {
             errorLabel.setText("Mật khẩu xác nhận không khớp.");
             return;
         }
 
-        // Kiểm tra tên đăng nhập trùng
         if (RegisterDAO.usernameExists(username)) {
             errorLabel.setText("Tên đăng nhập đã tồn tại.");
             return;
         }
 
-        // Ghi vào database
+        if (RegisterDAO.isDuplicateInfo(fullName, birthDate, email)) {
+            errorLabel.setText("Họ tên, ngày sinh hoặc email đã được sử dụng.");
+            return;
+        }
+
         boolean success = RegisterDAO.registerUserWithInfo(
                 fullName,
                 birthDate,
-                id,
                 email,
                 address,
                 username,

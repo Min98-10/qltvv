@@ -1,16 +1,16 @@
 package com.example.quanlythuvien.view;
 
+import com.example.quanlythuvien.dao.DocumentFileDAO;
 import com.example.quanlythuvien.model.Document;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.scene.Scene;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +18,19 @@ import java.util.function.Consumer;
 
 public class DocumentListPane extends VBox {
     private final GridPane grid;
-    private final List<Document> documents;
+    private final List<Document> allDocuments;
+    private final Consumer<Document> onSelected;
 
     public DocumentListPane(Consumer<Document> onDocumentSelected) {
+        this.onSelected = onDocumentSelected;
+
         setPadding(new Insets(20));
         setSpacing(15);
 
-        // ===== Header =====
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label title = new Label("📚 Danh sách tài liệu (Demo)");
+        Label title = new Label("📚 Danh sách tài liệu");
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         Button addBtn = new Button("➕ Thêm tài liệu");
@@ -36,28 +38,29 @@ public class DocumentListPane extends VBox {
 
         header.getChildren().addAll(title, addBtn);
 
-        // ===== Grid tài liệu =====
         grid = new GridPane();
         grid.setHgap(20);
         grid.setVgap(20);
 
-        documents = new ArrayList<>(getMockDocuments());
-        reloadGrid(onDocumentSelected);
+        allDocuments = new ArrayList<>(DocumentFileDAO.getAll());
+        reloadGrid();
 
         getChildren().addAll(header, grid);
     }
 
-    private void reloadGrid(Consumer<Document> onDocumentSelected) {
+    private void reloadGrid() {
         grid.getChildren().clear();
         int col = 0, row = 0;
 
-        for (Document doc : documents) {
-            VBox card = createDocumentCard(doc);
-            card.setOnMouseClicked((MouseEvent e) -> onDocumentSelected.accept(doc));
-            grid.add(card, col, row);
+        allDocuments.clear();
+        allDocuments.addAll(DocumentFileDAO.getAll());
 
+        for (Document doc : allDocuments) {
+            VBox card = createDocumentCard(doc);
+            card.setOnMouseClicked((MouseEvent e) -> onSelected.accept(doc));
+            grid.add(card, col, row);
             col++;
-            if (col == 4) {
+            if (col == 6) {
                 col = 0;
                 row++;
             }
@@ -65,13 +68,20 @@ public class DocumentListPane extends VBox {
     }
 
     private VBox createDocumentCard(Document doc) {
-        VBox card = new VBox(5);
+        VBox card = new VBox(10);
         card.setPadding(new Insets(10));
-        card.setStyle("-fx-border-color: #ccc; -fx-border-radius: 5px;");
-        card.setAlignment(Pos.CENTER);
-        card.setPrefWidth(150);
+        card.setStyle("-fx-border-color: #ccc; -fx-background-color: white; -fx-border-radius: 8px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 4, 0, 0, 2);");
+        card.setAlignment(Pos.TOP_CENTER);
+        card.setPrefWidth(160);
+        card.setPrefHeight(300);
 
-        ImageView img = new ImageView(new Image(doc.getImageUrl(), 100, 130, true, true));
+        ImageView img;
+        try {
+            img = new ImageView(new Image(doc.getImageUrl(), 120, 160, true, true));
+        } catch (Exception e) {
+            img = new ImageView(new Image("https://via.placeholder.com/120x160"));
+        }
+
         Label title = new Label(doc.getTitle());
         title.setWrapText(true);
         title.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
@@ -79,14 +89,20 @@ public class DocumentListPane extends VBox {
         Label author = new Label(doc.getAuthor());
         author.setStyle("-fx-font-size: 12px;");
 
-        card.getChildren().addAll(img, title, author);
+        Button deleteBtn = new Button("❌ Xoá");
+        deleteBtn.setStyle("-fx-font-size: 11px;");
+        deleteBtn.setOnAction(e -> {
+            DocumentFileDAO.remove(doc);
+            reloadGrid();
+        });
+
+        card.getChildren().addAll(img, title, author, deleteBtn);
         return card;
     }
 
     private void showAddDocumentForm() {
-        // ===== Form thêm tài liệu (giả lập) =====
         Stage popup = new Stage();
-        popup.setTitle("Thêm tài liệu (demo)");
+        popup.setTitle("➕ Thêm tài liệu");
 
         TextField titleField = new TextField();
         titleField.setPromptText("Tên tài liệu");
@@ -101,7 +117,7 @@ public class DocumentListPane extends VBox {
         TextField statusField = new TextField("Còn");
         TextArea summaryArea = new TextArea("Tóm tắt nội dung...");
 
-        Button saveBtn = new Button("Lưu demo");
+        Button saveBtn = new Button("Lưu");
         saveBtn.setOnAction(e -> {
             Document newDoc = new Document(
                     titleField.getText(),
@@ -113,8 +129,8 @@ public class DocumentListPane extends VBox {
                     "01/06/2025",
                     summaryArea.getText()
             );
-            documents.add(newDoc);
-            reloadGrid(doc -> {});
+            DocumentFileDAO.add(newDoc);
+            reloadGrid();
             popup.close();
         });
 
@@ -133,14 +149,5 @@ public class DocumentListPane extends VBox {
         Scene scene = new Scene(layout);
         popup.setScene(scene);
         popup.show();
-    }
-
-    private List<Document> getMockDocuments() {
-        return List.of(
-                new Document("Quỷ Tiến Hóa", "Nguyễn Văn A", "https://via.placeholder.com/100x130", "Lập trình", "Còn", 120, "01/05/2025", "Tài liệu về tiến hóa..."),
-                new Document("Tâm lý học cơ bản", "Trần Thị B", "https://via.placeholder.com/100x130", "Tâm lý", "Còn", 89, "28/04/2025", "Khái niệm cơ bản tâm lý."),
-                new Document("Cấu trúc dữ liệu", "Phạm Văn C", "https://via.placeholder.com/100x130", "Lập trình", "Hết", 200, "15/04/2025", "Tài liệu học cấu trúc."),
-                new Document("Tài chính doanh nghiệp", "Hoàng Văn D", "https://via.placeholder.com/100x130", "Kinh tế", "Còn", 56, "02/05/2025", "Giáo trình tài chính.")
-        );
     }
 }
