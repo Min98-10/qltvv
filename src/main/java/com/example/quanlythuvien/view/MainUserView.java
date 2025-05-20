@@ -44,6 +44,25 @@ public class MainUserView {
         centerBox.getStyleClass().add("content-pane");
         VBox.setVgrow(centerBox, Priority.ALWAYS);
 
+        // ===== TÌM KIẾM =====
+        searchField.setOnKeyReleased(e -> {
+            String keyword = searchField.getText().trim().toLowerCase();
+            DocumentListPaneUser list = new DocumentListPaneUser(doc -> {
+                Document fullDoc = DocumentFileDAO.getByTitle(doc.getTitle());
+                if (fullDoc != null) {
+                    DocumentDetailPaneUser detail = new DocumentDetailPaneUser(fullDoc, username);
+                    VBox.setVgrow(detail, Priority.ALWAYS);
+                    centerBox.getChildren().setAll(detail);
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "❌ Không tìm thấy dữ liệu sách.");
+                    alert.show();
+                }
+            });
+            list.filterDocumentsByKeyword(keyword);
+            VBox.setVgrow(list, Priority.ALWAYS);
+            centerBox.getChildren().setAll(list);
+        });
+
         String[] functions = {
                 "Trang chủ", "Tài liệu có sẵn", "Tài liệu đã mượn",
                 "Lịch sử mượn trả", "Thông tin tài khoản"

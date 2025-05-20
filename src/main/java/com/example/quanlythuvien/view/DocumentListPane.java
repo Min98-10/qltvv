@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class DocumentListPane extends VBox {
     private final GridPane grid;
@@ -34,7 +35,7 @@ public class DocumentListPane extends VBox {
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         Button addBtn = new Button("➕ Thêm tài liệu");
-        addBtn.setOnAction(e -> showAddDocumentForm());
+        addBtn.setOnAction(_ -> showAddDocumentForm());
 
         header.getChildren().addAll(title, addBtn);
 
@@ -43,19 +44,16 @@ public class DocumentListPane extends VBox {
         grid.setVgap(20);
 
         allDocuments = new ArrayList<>(DocumentFileDAO.getAll());
-        reloadGrid();
+        reloadGrid(allDocuments);
 
         getChildren().addAll(header, grid);
     }
 
-    private void reloadGrid() {
+    private void reloadGrid(List<Document> docs) {
         grid.getChildren().clear();
         int col = 0, row = 0;
 
-        allDocuments.clear();
-        allDocuments.addAll(DocumentFileDAO.getAll());
-
-        for (Document doc : allDocuments) {
+        for (Document doc : docs) {
             VBox card = createDocumentCard(doc);
             card.setOnMouseClicked((MouseEvent e) -> onSelected.accept(doc));
             grid.add(card, col, row);
@@ -65,6 +63,21 @@ public class DocumentListPane extends VBox {
                 row++;
             }
         }
+    }
+
+    private void reloadGrid() {
+        allDocuments.clear();
+        allDocuments.addAll(DocumentFileDAO.getAll());
+        reloadGrid(allDocuments);
+    }
+
+    public void filterDocumentsByKeyword(String keyword) {
+        List<Document> filtered = allDocuments.stream()
+                .filter(doc -> doc.getTitle().toLowerCase().contains(keyword)
+                        || doc.getAuthor().toLowerCase().contains(keyword)
+                        || doc.getCategory().toLowerCase().contains(keyword))
+                .collect(Collectors.toList());
+        reloadGrid(filtered);
     }
 
     private VBox createDocumentCard(Document doc) {
@@ -104,47 +117,14 @@ public class DocumentListPane extends VBox {
         Stage popup = new Stage();
         popup.setTitle("➕ Thêm tài liệu");
 
-        TextField titleField = new TextField();
-        titleField.setPromptText("Tên tài liệu");
-
-        TextField authorField = new TextField();
-        authorField.setPromptText("Tác giả");
-
-        TextField imageUrlField = new TextField();
-        imageUrlField.setPromptText("Link ảnh bìa (URL)");
-
-        TextField categoryField = new TextField("Lập trình");
-        TextField statusField = new TextField("Còn");
-        TextArea summaryArea = new TextArea("Tóm tắt nội dung...");
-
-        Button saveBtn = new Button("Lưu");
-        saveBtn.setOnAction(e -> {
-            Document newDoc = new Document(
-                    titleField.getText(),
-                    authorField.getText(),
-                    imageUrlField.getText(),
-                    categoryField.getText(),
-                    statusField.getText(),
-                    0,
-                    "01/06/2025",
-                    summaryArea.getText()
-            );
-            DocumentFileDAO.add(newDoc);
+        Runnable onSuccess = () -> {
             reloadGrid();
             popup.close();
-        });
+        };
 
-        VBox layout = new VBox(10,
-                new Label("Tên tài liệu:"), titleField,
-                new Label("Tác giả:"), authorField,
-                new Label("Ảnh bìa (URL):"), imageUrlField,
-                new Label("Thể loại:"), categoryField,
-                new Label("Tình trạng:"), statusField,
-                new Label("Tóm tắt:"), summaryArea,
-                saveBtn
-        );
+        AddDocumentPane formPane = new AddDocumentPane(onSuccess);
+        VBox layout = new VBox(15, formPane);
         layout.setPadding(new Insets(20));
-        layout.setPrefWidth(400);
 
         Scene scene = new Scene(layout);
         popup.setScene(scene);

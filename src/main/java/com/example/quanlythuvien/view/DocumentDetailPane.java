@@ -1,7 +1,10 @@
 package com.example.quanlythuvien.view;
 
 import com.example.quanlythuvien.dao.DocumentFileDAO;
+import com.example.quanlythuvien.model.Comment;
 import com.example.quanlythuvien.model.Document;
+import com.example.quanlythuvien.util.CommentDataManager;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -10,6 +13,9 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DocumentDetailPane extends VBox {
 
@@ -20,6 +26,7 @@ public class DocumentDetailPane extends VBox {
     private final Label viewsLabel;
     private final Label updatedLabel;
     private final ImageView imageView;
+    private final ListView<String> commentList;
     private Document currentDocument;
 
     public DocumentDetailPane() {
@@ -51,26 +58,28 @@ public class DocumentDetailPane extends VBox {
 
         HBox actionBox = new HBox(20);
         actionBox.setAlignment(Pos.CENTER_LEFT);
-        Button editBtn = new Button("Sửa");
+        Button editBtn = new Button("✏️ Sửa");
         actionBox.getChildren().addAll(editBtn);
 
         editBtn.setOnAction(e -> openEditPopup());
 
-        infoBox.getChildren().addAll(updatedLabel, authorLabel, categoryLabel, statusLabel, viewsLabel, actionBox);
+        infoBox.getChildren().addAll(
+                updatedLabel, authorLabel, categoryLabel,
+                statusLabel, viewsLabel, actionBox
+        );
         HBox.setHgrow(infoBox, Priority.ALWAYS);
 
         HBox topSection = new HBox(30, imageBox, infoBox);
         topSection.setAlignment(Pos.CENTER);
         HBox.setHgrow(topSection, Priority.ALWAYS);
 
-        Label commentLabel = new Label("💬 Bình luận");
+        // ===== HIỂN THỊ BÌNH LUẬN =====
+        Label commentLabel = new Label("💬 Bình luận của người dùng");
         commentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
-        TextArea commentArea = new TextArea();
-        commentArea.setPromptText("Viết bình luận tại đây...");
-        commentArea.setPrefHeight(100);
-        commentArea.setWrapText(true);
 
-        VBox commentBox = new VBox(10, commentLabel, commentArea);
+        commentList = new ListView<>();
+
+        VBox commentBox = new VBox(10, commentLabel, commentList);
         commentBox.setPadding(new Insets(10));
 
         getChildren().addAll(titleLabel, topSection, commentBox);
@@ -87,10 +96,19 @@ public class DocumentDetailPane extends VBox {
         updatedLabel.setText("🕒 Cập nhật: " + (doc.getUpdatedAt().isEmpty() ? "Không rõ" : doc.getUpdatedAt()));
 
         try {
-            imageView.setImage(new Image(doc.getImageUrl()));
+            imageView.setImage(new Image(doc.getImageUrl(), true));
         } catch (Exception e) {
             imageView.setImage(new Image("https://via.placeholder.com/160x220"));
         }
+
+        updateComments(doc.getTitle());
+    }
+
+    private void updateComments(String documentTitle) {
+        List<String> comments = CommentDataManager.getByDocument(documentTitle).stream()
+                .map(c -> c.getUsername() + " (★" + c.getStars() + ", " + c.getDate() + "): " + c.getContent())
+                .collect(Collectors.toList());
+        commentList.setItems(FXCollections.observableArrayList(comments));
     }
 
     private void openEditPopup() {
@@ -108,12 +126,12 @@ public class DocumentDetailPane extends VBox {
 
         Button saveBtn = new Button("Lưu");
         saveBtn.setOnAction(e -> {
-            currentDocument.setTitle(titleField.getText());
-            currentDocument.setAuthor(authorField.getText());
-            currentDocument.setCategory(categoryField.getText());
-            currentDocument.setStatus(statusField.getText());
-            currentDocument.setViewCount(Integer.parseInt(viewsField.getText()));
-            currentDocument.setImageUrl(imageUrlField.getText());
+            currentDocument.setTitle(titleField.getText().trim());
+            currentDocument.setAuthor(authorField.getText().trim());
+            currentDocument.setCategory(categoryField.getText().trim());
+            currentDocument.setStatus(statusField.getText().trim());
+            currentDocument.setViewCount(Integer.parseInt(viewsField.getText().trim()));
+            currentDocument.setImageUrl(imageUrlField.getText().trim());
 
             DocumentFileDAO.update(currentDocument);
             setData(currentDocument);

@@ -16,15 +16,17 @@ import java.util.stream.Collectors;
 
 public class BorrowHistoryPane extends VBox {
 
+    private final TableView<Record> table;
+
     public BorrowHistoryPane(String username) {
         setPadding(new Insets(20));
         setSpacing(15);
         VBox.setVgrow(this, Priority.ALWAYS);
 
-        Label title = new Label("📚 Lịch sử mượn trả");
+        Label title = new Label("📚 Lịch sử mượn và đang mượn");
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        TableView<Record> table = new TableView<>();
+        table = new TableView<>();
 
         TableColumn<Record, String> titleCol = new TableColumn<>("Tài liệu");
         titleCol.setCellValueFactory(data -> data.getValue().titleProperty());
@@ -39,41 +41,52 @@ public class BorrowHistoryPane extends VBox {
         noteCol.setCellValueFactory(data -> data.getValue().noteProperty());
 
         table.getColumns().addAll(titleCol, borrowCol, returnCol, noteCol);
-        table.setItems(loadUserRecords(username));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        VBox.setVgrow(table, Priority.ALWAYS);
 
         getChildren().addAll(title, table);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        loadData(username);
+    }
+
+    public void loadData(String username) {
+        table.setItems(loadUserRecords(username));
     }
 
     private ObservableList<Record> loadUserRecords(String username) {
         List<BorrowRecord> all = BorrowDataManager.findByUsername(username);
-        List<Record> records = all.stream().map(r -> {
-            String returnDate = r.getStatus().equalsIgnoreCase("Đã trả") ? r.getDueDate() : "-";
-            String note;
-            try {
-                LocalDate due = LocalDate.parse(r.getDueDate());
-                if (r.getStatus().equalsIgnoreCase("Đã trả")) {
-                    LocalDate today = LocalDate.now();
-                    if (today.isAfter(due)) {
-                        long daysLate = today.toEpochDay() - due.toEpochDay();
-                        note = "🟠 Trả trễ " + daysLate + " ngày";
-                    } else {
-                        note = "✅ Trả đúng hạn";
-                    }
-                } else {
-                    if (LocalDate.now().isAfter(due)) {
-                        note = "🔴 Quá hạn";
-                    } else {
-                        note = "⏳ Đang mượn";
-                    }
-                }
-            } catch (Exception e) {
-                note = "-";
-            }
 
-            return new Record(r.getDocumentTitle(), r.getBorrowDate(), returnDate, note);
-        }).collect(Collectors.toList());
+        List<Record> records = all.stream()
+                .filter(r -> r.getStatus().equalsIgnoreCase("Đã trả") || r.getStatus().equalsIgnoreCase("Đang mượn"))
+                .map(r -> {
+                    String returnDate = r.getReturnDate() != null ? r.getReturnDate() : (r.getStatus().equalsIgnoreCase("Đang mượn") ? "Chưa trả" : "-");
+                    String note;
+
+                    try {
+                        LocalDate due = LocalDate.parse(r.getDueDate());
+                        if (r.getStatus().equalsIgnoreCase("Đã trả")) {
+                            LocalDate returned = LocalDate.parse(r.getReturnDate());
+                            if (returned.isAfter(due)) {
+                                long daysLate = returned.toEpochDay() - due.toEpochDay();
+                                note = " Trả trễ " + daysLate + " ngày";
+                            } else {
+                                note = "✅ Trả đúng hạn";
+                            }
+                        } else {
+                            LocalDate now = LocalDate.now();
+                            if (now.isAfter(due)) {
+                                note = " Đang mượn - Quá hạn";
+                            } else if (now.plusDays(3).isAfter(due)) {
+                                note = " Đang mượn - Sắp đến hạn";
+                            } else {
+                                note = " Đang mượn";
+                            }
+                        }
+                    } catch (Exception e) {
+                        note = "-";
+                    }
+
+                    return new Record(r.getDocumentTitle(), r.getBorrowDate(), returnDate, note);
+                }).collect(Collectors.toList());
 
         return FXCollections.observableArrayList(records);
     }
@@ -91,20 +104,9 @@ public class BorrowHistoryPane extends VBox {
             note = new SimpleStringProperty(n);
         }
 
-        public StringProperty titleProperty() {
-            return title;
-        }
-
-        public StringProperty borrowDateProperty() {
-            return borrowDate;
-        }
-
-        public StringProperty returnDateProperty() {
-            return returnDate;
-        }
-
-        public StringProperty noteProperty() {
-            return note;
-        }
+        public StringProperty titleProperty() { return title; }
+        public StringProperty borrowDateProperty() { return borrowDate; }
+        public StringProperty returnDateProperty() { return returnDate; }
+        public StringProperty noteProperty() { return note; }
     }
 }

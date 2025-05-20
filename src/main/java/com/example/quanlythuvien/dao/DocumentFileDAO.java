@@ -84,4 +84,13 @@ public class DocumentFileDAO {
                         doc.getAuthor().toLowerCase().contains(lower))
                 .collect(Collectors.toList());
     }
+
+    // Tăng lượt mượn tài liệu theo tiêu đề
+    public static void increaseViewCount(String title, int amount) {
+        Document doc = getByTitle(title);
+        if (doc != null) {
+            doc.setViewCount(doc.getViewCount() + amount);
+            update(doc);
+        }
+    }
 }

@@ -3,11 +3,8 @@ package com.example.quanlythuvien.view;
 import com.example.quanlythuvien.model.BorrowRecord;
 import com.example.quanlythuvien.model.Comment;
 import com.example.quanlythuvien.model.Document;
-import com.example.quanlythuvien.model.Rating;
 import com.example.quanlythuvien.util.BorrowDataManager;
 import com.example.quanlythuvien.util.CommentDataManager;
-import com.example.quanlythuvien.util.RatingDataManager;
-import com.example.quanlythuvien.dao.DocumentFileDAO;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -27,6 +24,7 @@ public class DocumentDetailPaneUser extends BorderPane {
     private final VBox centerBox;
     private final VBox rightBox;
     private final ListView<String> commentList;
+    private final Label avgRatingLabel;
 
     public DocumentDetailPaneUser(Document doc, String username) {
         setPadding(new Insets(20));
@@ -46,13 +44,13 @@ public class DocumentDetailPaneUser extends BorderPane {
         imageView.setFitWidth(220);
         imageView.setPreserveRatio(true);
 
-        Label updatedLabel = new Label("🕒 Cập nhật: " + doc.getUpdatedAt());
+        Label updatedLabel = new Label("\uD83D\uDD52 Cập nhật: " + doc.getUpdatedAt());
         Label authorLabel = new Label("✍ Tác giả: " + doc.getAuthor());
-        Label categoryLabel = new Label("📂 Thể loại: " + doc.getCategory());
-        Label statusLabel = new Label("📦 Tình trạng: " + doc.getStatus());
-        Label viewsLabel = new Label("👁️ Lượt mượn: " + doc.getViewCount());
+        Label categoryLabel = new Label("\uD83D\uDCC2 Thể loại: " + doc.getCategory());
+        Label statusLabel = new Label("\uD83D\uDCE6 Tình trạng: " + doc.getStatus());
+        Label viewsLabel = new Label("\uD83D\uDC41️ Lượt mượn: " + doc.getViewCount());
 
-        Button borrowBtn = new Button("📥 Mượn tài liệu");
+        Button borrowBtn = new Button("\uD83D\uDCE5 Mượn tài liệu");
         borrowBtn.setStyle("-fx-font-size: 14px;");
         borrowBtn.setOnAction(e -> showBorrowDialog(doc, username));
 
@@ -63,7 +61,7 @@ public class DocumentDetailPaneUser extends BorderPane {
         HBox topSection = new HBox(30, imageView, infoBox);
         topSection.setAlignment(Pos.CENTER_LEFT);
 
-        Label commentLabel = new Label("💬 BÌNH LUẬN");
+        Label commentLabel = new Label("\uD83D\uDCAC BÌNH LUẬN & ĐÁNH GIÁ");
         commentLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
         commentList = new ListView<>();
@@ -72,18 +70,27 @@ public class DocumentDetailPaneUser extends BorderPane {
         TextField commentField = new TextField();
         commentField.setPromptText("Viết bình luận...");
 
+        ComboBox<Integer> starBox = new ComboBox<>();
+        starBox.getItems().addAll(1, 2, 3, 4, 5);
+        starBox.setPromptText("Chọn sao (1–5)");
+
         Button sendBtn = new Button("Gửi");
         sendBtn.setOnAction(e -> {
             String content = commentField.getText().trim();
-            if (!content.isEmpty()) {
-                Comment c = new Comment(username, doc.getTitle(), content, LocalDate.now().toString());
+            Integer stars = starBox.getValue();
+            if (!content.isEmpty() && stars != null) {
+                Comment c = new Comment(username, doc.getTitle(), content, LocalDate.now().toString(), stars);
                 CommentDataManager.add(c);
                 updateComments(doc.getTitle());
+                updateAverageRating(doc.getTitle());
                 commentField.clear();
+                starBox.setValue(null);
+            } else {
+                new Alert(Alert.AlertType.WARNING, "Vui lòng nhập bình luận và chọn sao!").show();
             }
         });
 
-        HBox commentBox = new HBox(5, commentField, sendBtn);
+        HBox commentBox = new HBox(5, commentField, starBox, sendBtn);
         commentBox.setAlignment(Pos.CENTER_LEFT);
 
         centerBox.getChildren().addAll(titleLabel, topSection, commentLabel, commentList, commentBox);
@@ -93,26 +100,11 @@ public class DocumentDetailPaneUser extends BorderPane {
         rightBox.setStyle("-fx-background-color: #f5f5f5;");
         rightBox.setPrefWidth(260);
 
-        Label ratingLabel = new Label("⭐ Đánh giá");
+        Label ratingLabel = new Label("⭐ Đánh giá trung bình");
         ratingLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 15px;");
-        Label avgRating = new Label("★ " + RatingDataManager.getAverageRating(doc.getTitle()) + " / 5");
+        avgRatingLabel = new Label("★ " + CommentDataManager.getAverageStars(doc.getTitle()) + " / 5");
 
-        ComboBox<Integer> ratingCombo = new ComboBox<>();
-        ratingCombo.getItems().addAll(1, 2, 3, 4, 5);
-        ratingCombo.setValue(5);
-
-        TextField reviewField = new TextField();
-        reviewField.setPromptText("Viết nhận xét...");
-
-        Button rateBtn = new Button("Đánh giá");
-        rateBtn.setOnAction(e -> {
-            Rating r = new Rating(username, doc.getTitle(), ratingCombo.getValue(), reviewField.getText());
-            RatingDataManager.add(r);
-            avgRating.setText("★ " + RatingDataManager.getAverageRating(doc.getTitle()) + " / 5");
-            reviewField.clear();
-        });
-
-        VBox ratingBox = new VBox(5, ratingLabel, avgRating, ratingCombo, reviewField, rateBtn);
+        VBox ratingBox = new VBox(5, ratingLabel, avgRatingLabel);
         VBox borrowBox = createBorrowBox(username, doc.getTitle());
         rightBox.getChildren().addAll(ratingBox, borrowBox);
 
@@ -139,20 +131,18 @@ public class DocumentDetailPaneUser extends BorderPane {
         Label messageLabel = new Label();
         messageLabel.setStyle("-fx-text-fill: red;");
 
-        Button confirmBtn = new Button("✅ Xác nhận");
+        Button confirmBtn = new Button("✅ Gửi yêu cầu");
         confirmBtn.setOnAction(e -> {
             try {
                 int quantity = Integer.parseInt(quantityField.getText().trim());
                 int days = daysSpinner.getValue();
                 String dueDate = LocalDate.now().plusDays(days).toString();
 
-                BorrowRecord record = new BorrowRecord(username, doc.getTitle(), borrowDate, dueDate, "Đang mượn", quantity);
+                BorrowRecord record = new BorrowRecord(username, doc.getTitle(), borrowDate, dueDate, "Chờ duyệt", quantity);
                 BorrowDataManager.add(record);
 
-                doc.setViewCount(doc.getViewCount() + quantity);
-                DocumentFileDAO.update(doc);
-
                 popup.close();
+                showInfo("Yêu cầu mượn đã được gửi và đang chờ admin duyệt.");
                 updateBorrowHistory(username, doc.getTitle());
 
             } catch (NumberFormatException ex) {
@@ -175,11 +165,23 @@ public class DocumentDetailPaneUser extends BorderPane {
         popup.show();
     }
 
+    private void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thông báo");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     private void updateComments(String documentTitle) {
         List<String> comments = CommentDataManager.getByDocument(documentTitle).stream()
-                .map(c -> c.getUsername() + " (" + c.getDate() + "): " + c.getContent())
+                .map(c -> c.getUsername() + " (★" + c.getStars() + ", " + c.getDate() + "): " + c.getContent())
                 .collect(Collectors.toList());
         commentList.setItems(FXCollections.observableArrayList(comments));
+    }
+
+    private void updateAverageRating(String documentTitle) {
+        avgRatingLabel.setText("★ " + CommentDataManager.getAverageStars(documentTitle) + " / 5");
     }
 
     private VBox createBorrowBox(String username, String documentTitle) {

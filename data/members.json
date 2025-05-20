@@ -5,7 +5,6 @@
     "role": "user",
     "fullName": "nam",
     "birthDate": "2025-05-05",
-    "id": "12345",
     "email": "nam@gmail.com",
     "address": "113344"
   },
@@ -15,7 +14,6 @@
     "role": "admin",
     "fullName": "lam",
     "birthDate": "2025-05-15",
-    "id": "122334",
     "email": "lam@gmail.com",
     "address": "1235556"
   },
@@ -25,7 +23,6 @@
     "role": "user",
     "fullName": "han",
     "birthDate": "2025-05-09",
-    "id": "12345",
     "email": "han@gmail.com",
     "address": "122345"
   }

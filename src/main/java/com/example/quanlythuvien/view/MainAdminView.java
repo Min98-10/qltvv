@@ -1,6 +1,5 @@
 package com.example.quanlythuvien.view;
 
-import com.example.quanlythuvien.model.Document;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -42,12 +41,26 @@ public class MainAdminView {
         centerBox.getStyleClass().add("content-pane");
         VBox.setVgrow(centerBox, Priority.ALWAYS);
 
+        // ===== CHỨC NĂNG TÌM KIẾM =====
+        searchField.setOnKeyReleased(e -> {
+            String keyword = searchField.getText().trim().toLowerCase();
+            DocumentListPane listPane = new DocumentListPane(doc -> {
+                DocumentDetailPane detailPane = new DocumentDetailPane();
+                detailPane.setData(doc);
+                centerBox.getChildren().setAll(detailPane);
+            });
+            listPane.filterDocumentsByKeyword(keyword);
+            VBox.setVgrow(listPane, Priority.ALWAYS);
+            centerBox.getChildren().setAll(listPane);
+        });
+
         // ===== MENU =====
         String[] functions = {
                 "Trang chủ",
                 "Quản lý tài liệu",
                 "Quản lý thành viên",
                 "Quản lý mượn/trả",
+                "📥 Yêu cầu mượn",     // <-- mới thêm
                 "Thống kê"
         };
 
@@ -92,6 +105,12 @@ public class MainAdminView {
                     BorrowManagementPane borrowPane = new BorrowManagementPane();
                     VBox.setVgrow(borrowPane, Priority.ALWAYS);
                     centerBox.getChildren().setAll(borrowPane);
+                });
+
+                case "📥 Yêu cầu mượn" -> btn.setOnAction(_ -> {
+                    BorrowApprovalPane approvalPane = new BorrowApprovalPane();
+                    VBox.setVgrow(approvalPane, Priority.ALWAYS);
+                    centerBox.getChildren().setAll(approvalPane);
                 });
 
                 case "Thống kê" -> btn.setOnAction(_ -> {

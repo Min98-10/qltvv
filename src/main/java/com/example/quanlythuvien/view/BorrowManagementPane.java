@@ -6,13 +6,17 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BorrowManagementPane extends VBox {
 
@@ -26,7 +30,14 @@ public class BorrowManagementPane extends VBox {
         Label title = new Label("📚 Quản lý mượn/trả");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        List<BorrowRecord> records = BorrowDataManager.load();
+        // Lọc bỏ bản ghi "Chờ duyệt" và "Từ chối"
+        List<BorrowRecord> records = BorrowDataManager.load().stream()
+                .filter(r -> {
+                    String status = r.getStatus().toLowerCase();
+                    return !status.equals("chờ duyệt") && !status.equals("từ chối");
+                })
+                .collect(Collectors.toList());
+
         data = FXCollections.observableArrayList(records);
 
         table = new TableView<>(data);
@@ -63,35 +74,32 @@ public class BorrowManagementPane extends VBox {
                 markReturned.setOnAction(e -> {
                     BorrowRecord rec = getTableView().getItems().get(getIndex());
                     rec.setStatus("Đã trả");
-                    BorrowDataManager.save(table.getItems());
+                    rec.setReturnDate(LocalDate.now().toString());
+                    BorrowDataManager.updateRecord(rec);
                     table.refresh();
                 });
 
                 extend.setOnAction(e -> {
                     BorrowRecord rec = getTableView().getItems().get(getIndex());
-                    try {
-                        LocalDate currentDue = LocalDate.parse(rec.getDueDate());
-                        LocalDate newDue = currentDue.plusDays(7);
-                        rec.setDueDate(newDue.toString());
-
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                        alert.setTitle("Gia hạn");
-                        alert.setHeaderText("Đã gia hạn thêm 7 ngày cho: " + rec.getDocumentTitle());
-                        alert.setContentText("Hạn mới: " + newDue.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                        alert.show();
-
-                        BorrowDataManager.save(table.getItems());
-                        table.refresh();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                    showExtensionDialog(rec);
                 });
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : box);
+
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    BorrowRecord rec = getTableView().getItems().get(getIndex());
+                    boolean isReturned = rec.getStatus().equalsIgnoreCase("Đã trả");
+
+                    markReturned.setDisable(isReturned);
+                    extend.setDisable(isReturned);
+
+                    setGraphic(box);
+                }
             }
         });
 
@@ -99,5 +107,56 @@ public class BorrowManagementPane extends VBox {
 
         getChildren().addAll(title, table);
         VBox.setVgrow(table, Priority.ALWAYS);
+    }
+
+    private void showExtensionDialog(BorrowRecord record) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Gia hạn tài liệu");
+
+        Label label = new Label("Nhập số ngày muốn gia hạn:");
+        TextField daysField = new TextField();
+        daysField.setPromptText("Ví dụ: 5");
+
+        Button confirm = new Button("Xác nhận");
+        confirm.setDefaultButton(true);
+
+        Label feedback = new Label();
+
+        confirm.setOnAction(e -> {
+            try {
+                int days = Integer.parseInt(daysField.getText().trim());
+                if (days <= 0) {
+                    feedback.setText("⚠️ Số ngày phải lớn hơn 0.");
+                    return;
+                }
+
+                LocalDate newDue = LocalDate.parse(record.getDueDate()).plusDays(days);
+                record.setDueDate(newDue.toString());
+
+                BorrowDataManager.updateRecord(record);
+                table.refresh();
+
+                dialog.close();
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Gia hạn thành công");
+                alert.setHeaderText("Đã gia hạn " + days + " ngày cho: " + record.getDocumentTitle());
+                alert.setContentText("Hạn trả mới: " + newDue.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                alert.show();
+
+            } catch (NumberFormatException ex) {
+                feedback.setText("⚠️ Vui lòng nhập số nguyên hợp lệ.");
+            } catch (Exception ex) {
+                feedback.setText("❌ Lỗi khi gia hạn.");
+            }
+        });
+
+        VBox layout = new VBox(10, label, daysField, confirm, feedback);
+        layout.setPadding(new Insets(15));
+        layout.setAlignment(Pos.CENTER);
+
+        dialog.setScene(new Scene(layout, 300, 180));
+        dialog.showAndWait();
     }
 }

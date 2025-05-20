@@ -6,7 +6,7 @@
     "imageUrl": "http://books.google.com/books/content?id\u003dOuW5dC2O99AC\u0026printsec\u003dfrontcover\u0026img\u003d1\u0026zoom\u003d1\u0026edge\u003dcurl\u0026source\u003dgbs_api",
     "category": "",
     "status": "",
-    "viewCount": 3,
+    "viewCount": 20,
     "updatedAt": "",
     "summary": ""
   },
@@ -17,7 +17,7 @@
     "imageUrl": "http://books.google.com/books/content?id\u003dm7E4la3JAVcC\u0026printsec\u003dfrontcover\u0026img\u003d1\u0026zoom\u003d1\u0026edge\u003dcurl\u0026source\u003dgbs_api",
     "category": "",
     "status": "",
-    "viewCount": 0,
+    "viewCount": 6,
     "updatedAt": "",
     "summary": ""
   },
@@ -28,7 +28,7 @@
     "imageUrl": "http://books.google.com/books/content?id\u003dAhZJ9SIChnQC\u0026printsec\u003dfrontcover\u0026img\u003d1\u0026zoom\u003d1\u0026edge\u003dcurl\u0026source\u003dgbs_api",
     "category": "",
     "status": "",
-    "viewCount": 0,
+    "viewCount": 7,
     "updatedAt": "",
     "summary": ""
   },
@@ -45,13 +45,35 @@
   },
   {
     "id": 0,
-    "title": "Java",
-    "author": "Herbert Schildt",
-    "imageUrl": "https://covers.openlibrary.org/b/id/62098-M.jpg",
+    "title": "Objects first with Java",
+    "author": "David J. Barnes",
+    "imageUrl": "https://covers.openlibrary.org/b/id/89228-M.jpg",
     "category": "",
     "status": "",
     "viewCount": 0,
     "updatedAt": "",
+    "summary": ""
+  },
+  {
+    "id": 0,
+    "title": "Effective Java",
+    "author": "Joshua Bloch",
+    "imageUrl": "http://books.google.com/books/content?id\u003d1cVqswEACAAJ\u0026printsec\u003dfrontcover\u0026img\u003d1\u0026zoom\u003d1\u0026source\u003dgbs_api",
+    "category": "",
+    "status": "Còn",
+    "viewCount": 0,
+    "updatedAt": "01/06/2025",
+    "summary": ""
+  },
+  {
+    "id": 0,
+    "title": "Head First Design Patterns",
+    "author": "Eric Freeman, Elisabeth Robson",
+    "imageUrl": "http://books.google.com/books/content?id\u003d3GqAzQEACAAJ\u0026printsec\u003dfrontcover\u0026img\u003d1\u0026zoom\u003d1\u0026source\u003dgbs_api",
+    "category": "",
+    "status": "Còn",
+    "viewCount": 1,
+    "updatedAt": "01/06/2025",
     "summary": ""
   }
 ]

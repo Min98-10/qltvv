@@ -12,11 +12,15 @@ import javafx.scene.layout.*;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class DocumentListPaneUser extends VBox {
     private final GridPane grid;
+    private final Consumer<Document> onDocumentSelected;
 
     public DocumentListPaneUser(Consumer<Document> onDocumentSelected) {
+        this.onDocumentSelected = onDocumentSelected;
+
         setPadding(new Insets(20));
         setSpacing(15);
 
@@ -27,7 +31,23 @@ public class DocumentListPaneUser extends VBox {
         grid.setHgap(20);
         grid.setVgap(20);
 
-        List<Document> documents = DocumentFileDAO.getAll();
+        getChildren().addAll(title, grid);
+
+        // Hiển thị tất cả tài liệu ban đầu
+        showDocuments(DocumentFileDAO.getAll());
+    }
+
+    public void filterDocumentsByKeyword(String keyword) {
+        List<Document> filtered = DocumentFileDAO.getAll().stream()
+                .filter(doc -> doc.getTitle().toLowerCase().contains(keyword)
+                        || doc.getAuthor().toLowerCase().contains(keyword)
+                        || doc.getCategory().toLowerCase().contains(keyword))
+                .collect(Collectors.toList());
+        showDocuments(filtered);
+    }
+
+    private void showDocuments(List<Document> documents) {
+        grid.getChildren().clear();
 
         int col = 0, row = 0;
         for (Document doc : documents) {
@@ -40,8 +60,6 @@ public class DocumentListPaneUser extends VBox {
                 row++;
             }
         }
-
-        getChildren().addAll(title, grid);
     }
 
     private VBox createDocumentCard(Document doc) {
@@ -55,7 +73,11 @@ public class DocumentListPaneUser extends VBox {
 
         ImageView imageView = new ImageView();
         if (doc.getImageUrl() != null && !doc.getImageUrl().isEmpty()) {
-            imageView.setImage(new Image(doc.getImageUrl(), 120, 160, true, true));
+            try {
+                imageView.setImage(new Image(doc.getImageUrl(), 120, 160, true, true));
+            } catch (Exception e) {
+                imageView.setImage(new Image("https://via.placeholder.com/120x160"));
+            }
         }
 
         Label titleLabel = new Label(doc.getTitle());

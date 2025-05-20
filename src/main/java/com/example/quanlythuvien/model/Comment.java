@@ -9,12 +9,14 @@ public class Comment implements Serializable {
     private final String documentTitle;
     private final String content;
     private final String date;
+    private final int stars;
 
-    public Comment(String username, String documentTitle, String content, String date) {
+    public Comment(String username, String documentTitle, String content, String date, int stars) {
         this.username = username;
         this.documentTitle = documentTitle;
         this.content = content;
         this.date = date;
+        this.stars = stars;
     }
 
     public String getUsername() { return username; }
@@ -24,4 +26,6 @@ public class Comment implements Serializable {
     public String getContent() { return content; }
 
     public String getDate() { return date; }
+
+    public int getStars() { return stars; }
 }

@@ -18,7 +18,7 @@ public class CommentDataManager {
 
     public static List<Comment> loadAll() {
         File file = new File(FILE_PATH);
-        if (!file.exists()) return new ArrayList<>();
+        if (!file.exists() || file.length() == 0) return new ArrayList<>();
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
             return (List<Comment>) ois.readObject();
@@ -43,5 +43,13 @@ public class CommentDataManager {
         return loadAll().stream()
                 .filter(c -> c.getDocumentTitle().equalsIgnoreCase(documentTitle))
                 .collect(Collectors.toList());
+    }
+
+    public static double getAverageStars(String documentTitle) {
+        List<Comment> comments = getByDocument(documentTitle);
+        if (comments.isEmpty()) return 0.0;
+
+        double total = comments.stream().mapToInt(Comment::getStars).sum();
+        return Math.round((total / comments.size()) * 10.0) / 10.0;
     }
 }
