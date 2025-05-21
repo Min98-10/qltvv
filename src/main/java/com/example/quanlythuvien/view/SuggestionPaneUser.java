@@ -39,7 +39,7 @@ public class SuggestionPaneUser extends VBox {
     }
 
     private void loadSuggestionsFromFile() {
-        List<Document> documents = DocumentFileDAO.getAll();
+        List<Document> documents = DocumentFileDAO.getInstance().getAll();
         for (Document doc : documents) {
             VBox bookCard = createBookCard(doc);
             bookContainer.getChildren().add(bookCard);

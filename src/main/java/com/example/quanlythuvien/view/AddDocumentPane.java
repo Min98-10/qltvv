@@ -40,7 +40,7 @@ public class AddDocumentPane extends VBox {
                     ""
             );
 
-            DocumentFileDAO.add(doc);
+            DocumentFileDAO.getInstance().add(doc);
             new Alert(Alert.AlertType.INFORMATION, "Đã thêm tài liệu!").show();
 
             if (onSuccess != null) {

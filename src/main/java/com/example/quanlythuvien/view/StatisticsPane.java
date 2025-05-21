@@ -24,13 +24,13 @@ public class StatisticsPane extends VBox {
         Label title = new Label("📊 Thống kê thư viện");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        int docCount = DocumentFileDAO.getAll().size();
+        int docCount = DocumentFileDAO.getInstance().getAll().size();
         int userCount = MemberDataManager.loadMembers().size();
         int borrowCount = BorrowDataManager.load().size();
 
         String mostBorrowedTitle = "Không có dữ liệu";
         int maxBorrows = 0;
-        List<Document> docs = DocumentFileDAO.getAll();
+        List<Document> docs = DocumentFileDAO.getInstance().getAll();
         if (!docs.isEmpty()) {
             Document topDoc = docs.stream()
                     .max(Comparator.comparingInt(Document::getViewCount))

@@ -34,11 +34,11 @@ public class DocumentListPaneUser extends VBox {
         getChildren().addAll(title, grid);
 
         // Hiển thị tất cả tài liệu ban đầu
-        showDocuments(DocumentFileDAO.getAll());
+        showDocuments(DocumentFileDAO.getInstance().getAll());
     }
 
     public void filterDocumentsByKeyword(String keyword) {
-        List<Document> filtered = DocumentFileDAO.getAll().stream()
+        List<Document> filtered = DocumentFileDAO.getInstance().getAll().stream()
                 .filter(doc -> doc.getTitle().toLowerCase().contains(keyword)
                         || doc.getAuthor().toLowerCase().contains(keyword)
                         || doc.getCategory().toLowerCase().contains(keyword))

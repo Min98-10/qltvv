@@ -44,13 +44,13 @@ public class DocumentDetailPaneUser extends BorderPane {
         imageView.setFitWidth(220);
         imageView.setPreserveRatio(true);
 
-        Label updatedLabel = new Label("\uD83D\uDD52 Cập nhật: " + doc.getUpdatedAt());
+        Label updatedLabel = new Label("🕒 Cập nhật: " + doc.getUpdatedAt());
         Label authorLabel = new Label("✍ Tác giả: " + doc.getAuthor());
-        Label categoryLabel = new Label("\uD83D\uDCC2 Thể loại: " + doc.getCategory());
-        Label statusLabel = new Label("\uD83D\uDCE6 Tình trạng: " + doc.getStatus());
-        Label viewsLabel = new Label("\uD83D\uDC41️ Lượt mượn: " + doc.getViewCount());
+        Label categoryLabel = new Label("📂 Thể loại: " + doc.getCategory());
+        Label statusLabel = new Label("📦 Tình trạng: " + doc.getStatus());
+        Label viewsLabel = new Label("👁️ Lượt mượn: " + doc.getViewCount());
 
-        Button borrowBtn = new Button("\uD83D\uDCE5 Mượn tài liệu");
+        Button borrowBtn = new Button("📥 Mượn tài liệu");
         borrowBtn.setStyle("-fx-font-size: 14px;");
         borrowBtn.setOnAction(e -> showBorrowDialog(doc, username));
 
@@ -61,7 +61,7 @@ public class DocumentDetailPaneUser extends BorderPane {
         HBox topSection = new HBox(30, imageView, infoBox);
         topSection.setAlignment(Pos.CENTER_LEFT);
 
-        Label commentLabel = new Label("\uD83D\uDCAC BÌNH LUẬN & ĐÁNH GIÁ");
+        Label commentLabel = new Label("💬 BÌNH LUẬN & ĐÁNH GIÁ");
         commentLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
         commentList = new ListView<>();
@@ -80,7 +80,7 @@ public class DocumentDetailPaneUser extends BorderPane {
             Integer stars = starBox.getValue();
             if (!content.isEmpty() && stars != null) {
                 Comment c = new Comment(username, doc.getTitle(), content, LocalDate.now().toString(), stars);
-                CommentDataManager.add(c);
+                CommentDataManager.getInstance().add(c);
                 updateComments(doc.getTitle());
                 updateAverageRating(doc.getTitle());
                 commentField.clear();
@@ -102,7 +102,7 @@ public class DocumentDetailPaneUser extends BorderPane {
 
         Label ratingLabel = new Label("⭐ Đánh giá trung bình");
         ratingLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 15px;");
-        avgRatingLabel = new Label("★ " + CommentDataManager.getAverageStars(doc.getTitle()) + " / 5");
+        avgRatingLabel = new Label("★ " + CommentDataManager.getInstance().getAverageStars(doc.getTitle()) + " / 5");
 
         VBox ratingBox = new VBox(5, ratingLabel, avgRatingLabel);
         VBox borrowBox = createBorrowBox(username, doc.getTitle());
@@ -174,14 +174,14 @@ public class DocumentDetailPaneUser extends BorderPane {
     }
 
     private void updateComments(String documentTitle) {
-        List<String> comments = CommentDataManager.getByDocument(documentTitle).stream()
+        List<String> comments = CommentDataManager.getInstance().getByDocument(documentTitle).stream()
                 .map(c -> c.getUsername() + " (★" + c.getStars() + ", " + c.getDate() + "): " + c.getContent())
                 .collect(Collectors.toList());
         commentList.setItems(FXCollections.observableArrayList(comments));
     }
 
     private void updateAverageRating(String documentTitle) {
-        avgRatingLabel.setText("★ " + CommentDataManager.getAverageStars(documentTitle) + " / 5");
+        avgRatingLabel.setText("★ " + CommentDataManager.getInstance().getAverageStars(documentTitle) + " / 5");
     }
 
     private VBox createBorrowBox(String username, String documentTitle) {

@@ -1,5 +1,6 @@
 package com.example.quanlythuvien.view;
 
+import com.example.quanlythuvien.dao.DocumentFileDAO;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -60,7 +61,7 @@ public class MainAdminView {
                 "Quản lý tài liệu",
                 "Quản lý thành viên",
                 "Quản lý mượn/trả",
-                "📥 Yêu cầu mượn",     // <-- mới thêm
+                "📥 Yêu cầu mượn",
                 "Thống kê"
         };
 
@@ -74,8 +75,8 @@ public class MainAdminView {
             switch (name) {
                 case "Trang chủ" -> btn.setOnAction(_ -> {
                     SuggestionPane suggestionPane = new SuggestionPane(doc -> {
-                        if (!com.example.quanlythuvien.dao.DocumentFileDAO.contains(doc)) {
-                            com.example.quanlythuvien.dao.DocumentFileDAO.add(doc);
+                        if (!DocumentFileDAO.getInstance().contains(doc)) {
+                            DocumentFileDAO.getInstance().add(doc);
                         }
                         DocumentDetailPane detailPane = new DocumentDetailPane();
                         detailPane.setData(doc);
@@ -127,8 +128,8 @@ public class MainAdminView {
 
         // ===== TRANG CHỦ MẶC ĐỊNH =====
         SuggestionPane defaultPane = new SuggestionPane(doc -> {
-            if (!com.example.quanlythuvien.dao.DocumentFileDAO.contains(doc)) {
-                com.example.quanlythuvien.dao.DocumentFileDAO.add(doc);
+            if (!DocumentFileDAO.getInstance().contains(doc)) {
+                DocumentFileDAO.getInstance().add(doc);
             }
             DocumentDetailPane detailPane = new DocumentDetailPane();
             detailPane.setData(doc);

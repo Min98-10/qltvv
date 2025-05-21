@@ -48,7 +48,7 @@ public class MainUserView {
         searchField.setOnKeyReleased(e -> {
             String keyword = searchField.getText().trim().toLowerCase();
             DocumentListPaneUser list = new DocumentListPaneUser(doc -> {
-                Document fullDoc = DocumentFileDAO.getByTitle(doc.getTitle());
+                Document fullDoc = DocumentFileDAO.getInstance().getByTitle(doc.getTitle());
                 if (fullDoc != null) {
                     DocumentDetailPaneUser detail = new DocumentDetailPaneUser(fullDoc, username);
                     VBox.setVgrow(detail, Priority.ALWAYS);
@@ -85,7 +85,7 @@ public class MainUserView {
                 case "Tài liệu có sẵn" -> {
                     btn.setOnAction(e -> {
                         DocumentListPaneUser list = new DocumentListPaneUser(doc -> {
-                            Document fullDoc = DocumentFileDAO.getByTitle(doc.getTitle());
+                            Document fullDoc = DocumentFileDAO.getInstance().getByTitle(doc.getTitle());
                             if (fullDoc != null) {
                                 DocumentDetailPaneUser detail = new DocumentDetailPaneUser(fullDoc, username);
                                 VBox.setVgrow(detail, Priority.ALWAYS);

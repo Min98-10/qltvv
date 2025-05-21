@@ -90,10 +90,10 @@ public class SuggestionPane extends VBox {
         imageView.setCursor(javafx.scene.Cursor.HAND);
 
         imageView.setOnMouseClicked((MouseEvent e) -> {
-            if (!DocumentFileDAO.contains(doc)) {
-                DocumentFileDAO.add(doc);
+            if (!DocumentFileDAO.getInstance().contains(doc)) {
+                DocumentFileDAO.getInstance().add(doc);
             }
-            onBookSelected.accept(doc); // Gọi giao diện chi tiết
+            onBookSelected.accept(doc);
         });
 
         Label titleLabel = new Label(doc.getTitle());

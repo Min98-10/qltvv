@@ -105,7 +105,7 @@ public class DocumentDetailPane extends VBox {
     }
 
     private void updateComments(String documentTitle) {
-        List<String> comments = CommentDataManager.getByDocument(documentTitle).stream()
+        List<String> comments = CommentDataManager.getInstance().getByDocument(documentTitle).stream()
                 .map(c -> c.getUsername() + " (★" + c.getStars() + ", " + c.getDate() + "): " + c.getContent())
                 .collect(Collectors.toList());
         commentList.setItems(FXCollections.observableArrayList(comments));
@@ -133,7 +133,7 @@ public class DocumentDetailPane extends VBox {
             currentDocument.setViewCount(Integer.parseInt(viewsField.getText().trim()));
             currentDocument.setImageUrl(imageUrlField.getText().trim());
 
-            DocumentFileDAO.update(currentDocument);
+            DocumentFileDAO.getInstance().update(currentDocument);
             setData(currentDocument);
             popup.close();
         });

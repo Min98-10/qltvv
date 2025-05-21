@@ -9,14 +9,24 @@ import java.util.stream.Collectors;
 
 public class CommentDataManager {
     private static final String FILE_PATH = "data/comments.dat";
+    private static CommentDataManager instance;
 
-    public static void add(Comment comment) {
+    private CommentDataManager() {}
+
+    public static CommentDataManager getInstance() {
+        if (instance == null) {
+            instance = new CommentDataManager();
+        }
+        return instance;
+    }
+
+    public void add(Comment comment) {
         List<Comment> all = loadAll();
         all.add(comment);
         save(all);
     }
 
-    public static List<Comment> loadAll() {
+    public List<Comment> loadAll() {
         File file = new File(FILE_PATH);
         if (!file.exists() || file.length() == 0) return new ArrayList<>();
 
@@ -28,7 +38,7 @@ public class CommentDataManager {
         }
     }
 
-    public static void save(List<Comment> comments) {
+    public void save(List<Comment> comments) {
         File dir = new File("data");
         if (!dir.exists()) dir.mkdirs();
 
@@ -39,13 +49,13 @@ public class CommentDataManager {
         }
     }
 
-    public static List<Comment> getByDocument(String documentTitle) {
+    public List<Comment> getByDocument(String documentTitle) {
         return loadAll().stream()
                 .filter(c -> c.getDocumentTitle().equalsIgnoreCase(documentTitle))
                 .collect(Collectors.toList());
     }
 
-    public static double getAverageStars(String documentTitle) {
+    public double getAverageStars(String documentTitle) {
         List<Comment> comments = getByDocument(documentTitle);
         if (comments.isEmpty()) return 0.0;
 

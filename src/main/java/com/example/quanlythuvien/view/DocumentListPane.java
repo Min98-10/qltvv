@@ -43,7 +43,7 @@ public class DocumentListPane extends VBox {
         grid.setHgap(20);
         grid.setVgap(20);
 
-        allDocuments = new ArrayList<>(DocumentFileDAO.getAll());
+        allDocuments = new ArrayList<>(DocumentFileDAO.getInstance().getAll());
         reloadGrid(allDocuments);
 
         getChildren().addAll(header, grid);
@@ -67,7 +67,7 @@ public class DocumentListPane extends VBox {
 
     private void reloadGrid() {
         allDocuments.clear();
-        allDocuments.addAll(DocumentFileDAO.getAll());
+        allDocuments.addAll(DocumentFileDAO.getInstance().getAll());
         reloadGrid(allDocuments);
     }
 
@@ -105,7 +105,7 @@ public class DocumentListPane extends VBox {
         Button deleteBtn = new Button("❌ Xoá");
         deleteBtn.setStyle("-fx-font-size: 11px;");
         deleteBtn.setOnAction(e -> {
-            DocumentFileDAO.remove(doc);
+            DocumentFileDAO.getInstance().remove(doc);
             reloadGrid();
         });
 
